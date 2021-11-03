@@ -14,7 +14,7 @@
 #define ass assert
 #define SYMBOL_IS_USELESS *str == 'С' || *str == 'ц' || *str == 'е' || *str == 'н' || *str == 'а' || *str == 'M'       \
  ||*str == 'V' || *str == 'L' || *str == 'X' || *str == 'I' || *str == ' ' || *str == 'A' || *str == 'C' || *str == 'S'\
- || *str == 'e' || *str == 'n' || *str == 'A'
+ || *str == 'e' || *str == 'n' || *str == 'A' || *str == 'Г' || *str == 'л' || *str == 'в'
 
 typedef struct {
     char* strStart;
@@ -23,7 +23,9 @@ typedef struct {
 
 enum {
     FROM_START,
-    FROM_END
+    FROM_END,
+    ENG = 0,
+    RUS,
 };
 
 char* From_File_to_buffer (void);
@@ -62,22 +64,21 @@ int main (void)
 {
     setlocale (LC_ALL, "Rus");
 
-
     size_t indexsize = 0;
     char* ptrBuff = From_File_to_buffer ();
     ass (ptrBuff != NULL);
-    int mode = FROM_START;
 
     string* Index = Index_Make (ptrBuff, &indexsize);
     ass (Index != NULL);
 
     Str_bubble_Sort (Index, indexsize, FROM_END);
 
+    Poem_generator (Index, indexsize);
+
     Output_to_File (Index, indexsize);
 
     free (ptrBuff);
-
-    Poem_generator (Index, indexsize);
+    free (Index);
 
     return 0;
 }
@@ -116,8 +117,6 @@ string* Index_Make (char* ptrBuff, size_t* ptr_indexsize)
 {
     size_t i = 0;
     *ptr_indexsize = Find_indexsize_and_str_make (ptrBuff);
-
-    printf ("indexsize = %zd\n\n", *ptr_indexsize);
 
     string* Index =  (string*) calloc (*ptr_indexsize, sizeof (char*) + sizeof (size_t));
     ass (Index != NULL);
@@ -260,7 +259,6 @@ void Output_to_File (string Index[], size_t indexsize)
     }
 
     fclose (sort_buffer);
-    free (Index);
 }
 
 size_t Find_indexsize_and_str_make (char* ptrBuff)
@@ -347,7 +345,29 @@ void Poem_generator (string Index[], size_t indexsize)
     fprintf (poem, "%s\n", Index[rifm1[6]].strStart);
     fprintf (poem, "%s\n", Index[rifm2[6]].strStart);
 
+    fprintf (poem, "Автор: void Poem_generator (string Index[], size_t indexsize)\n");
+
     fclose (poem);
+
+    printf ("%s\n", Index[rifm1[0]].strStart);
+    printf ("%s\n", Index[rifm1[1]].strStart);
+    printf ("%s\n", Index[rifm2[0]].strStart);
+    printf ("%s\n", Index[rifm2[1]].strStart);
+
+    printf ("%s\n", Index[rifm1[2]].strStart);
+    printf ("%s\n", Index[rifm2[2]].strStart);
+    printf ("%s\n", Index[rifm1[3]].strStart);
+    printf ("%s\n", Index[rifm2[3]].strStart);
+
+    printf ("%s\n", Index[rifm1[4]].strStart);
+    printf ("%s\n", Index[rifm1[5]].strStart);
+    printf ("%s\n", Index[rifm2[5]].strStart);
+    printf ("%s\n", Index[rifm2[4]].strStart);
+
+    printf ("%s\n", Index[rifm1[6]].strStart);
+    printf ("%s\n", Index[rifm2[6]].strStart);
+
+    printf ("Автор: void Poem_generator (string Index[], size_t indexsize)\n");
 }
 
 
