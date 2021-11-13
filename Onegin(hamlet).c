@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -19,40 +20,33 @@
 typedef struct {
     char* strStart;
     char* strEnd;
-} string;
-
-enum {
-    FROM_START,
-    FROM_END,
-    ENG = 0,
-    RUS,
-};
+} str_t;
 
 char* From_File_to_buffer (void);
 
-string* Index_Make (char* ptrBuff, size_t* ptr_indexsize);
+str_t* Index_Make (char* ptrBuff, size_t* ptr_indexsize);
 
 size_t Find_indexsize_and_str_make (char* ptrBuff);
 
-void Str_bubble_Sort (string Index[], size_t indexsize, int mode);
+void Str_bubble_Sort (str_t Index[], size_t indexsize, int (*cmp) (const str_t Index1, const str_t Index2));
 
-void Output_to_File (string Index[], size_t indexsize);
+void Output_to_File (str_t Index[], size_t indexsize);
 
 int Is_malloc (const char* str);
 
-void Poem_generator (string Index[], size_t indexsize);
+void Poem_generator (str_t Index[], size_t indexsize);
 
 //--------------------------------------------------------------------------------
 //Sort from start
 
-int Str_Compare_from_start (const char* str1, const char* str2);
+int Str_Compare_from_start (const str_t Index1, const str_t Index2);
 
 char* Str_platinum_from_start (const char* str);
 
 //--------------------------------------------------------------------------------
 //Sort from end
 
-int Str_Compare_from_end (const char* str1, const char* str2);
+int Str_Compare_from_end (const str_t Index1, const str_t Index2);
 
 char* Str_platinum_from_end (const char* str);
 
@@ -68,10 +62,10 @@ int main (void)
     char* ptrBuff = From_File_to_buffer ();
     ass (ptrBuff != NULL);
 
-    string* Index = Index_Make (ptrBuff, &indexsize);
+    str_t* Index = Index_Make (ptrBuff, &indexsize);
     ass (Index != NULL);
 
-    Str_bubble_Sort (Index, indexsize, FROM_END);
+    Str_bubble_Sort (Index, indexsize, Str_Compare_from_end);
 
     Poem_generator (Index, indexsize);
 
@@ -113,12 +107,12 @@ char* From_File_to_buffer (void)
     return (char*)ptrBuff;
 }
 
-string* Index_Make (char* ptrBuff, size_t* ptr_indexsize)
+str_t* Index_Make (char* ptrBuff, size_t* ptr_indexsize)
 {
     size_t i = 0;
     *ptr_indexsize = Find_indexsize_and_str_make (ptrBuff);
 
-    string* Index =  (string*) calloc (*ptr_indexsize, sizeof (char*) + sizeof (size_t));
+    str_t* Index =  (str_t*) calloc (*ptr_indexsize, sizeof (char*) + sizeof (size_t));
     ass (Index != NULL);
 
     while (i < *ptr_indexsize)
@@ -140,13 +134,16 @@ string* Index_Make (char* ptrBuff, size_t* ptr_indexsize)
         Index[i].strEnd = Index[i].strStart + strlen (Index[i].strStart) - 1;
     }
 
-    return (string*) Index;
+    return (str_t*) Index;
 }
 
-int Str_Compare_from_start (const char* str1, const char* str2)
+int Str_Compare_from_start (const str_t Index1, const str_t Index2)
 {
-    ass (str1 != NULL);
-    ass (str2 != NULL);
+    ass (Index1.strStart != NULL);
+    ass (Index2.strStart != NULL);
+
+    char* str1 = Index1.strStart;
+    char* str2 = Index2.strStart;
 
     str1 = Str_platinum_from_start (str1);
     str2 = Str_platinum_from_start (str2);
@@ -160,10 +157,13 @@ int Str_Compare_from_start (const char* str1, const char* str2)
     return *str2 - *str1;
 }
 
-int Str_Compare_from_end (const char* str1, const char* str2)
+int Str_Compare_from_end (const str_t Index1, const str_t Index2)
 {
-    ass (str1 != NULL);
-    ass (str2 != NULL);
+    ass (Index1.strStart!= NULL);
+    ass (Index2.strStart != NULL);
+
+    char* str1 = Index1.strEnd;
+    char* str2 = Index2.strEnd;
 
     str1 = Str_platinum_from_end (str1);
     str2 = Str_platinum_from_end (str2);
@@ -208,46 +208,26 @@ char* Str_platinum_from_end (const char* str)
 }
 
 
-void Str_bubble_Sort (string Index[], size_t indexsize, int mode)
+void Str_bubble_Sort (str_t Index[], size_t indexsize, int (*cmp) (const str_t Index1, const str_t Index2))
 {
-    if (mode == FROM_START)
-    {
-        for (size_t j = 1; j < indexsize; j++)
-        {
-            for (size_t i = 0; i < indexsize - j; i++)
-            {
-                ass ((char*)Index[i].strStart != NULL);
-                ass ((char*)Index[i + 1].strStart != NULL);
-                if(Str_Compare_from_start (Index[i].strStart, Index[i + 1].strStart) < 0)
-                {
-                    string temp = Index[i];
-                    Index[i] = Index[i + 1];
-                    Index[i + 1] = temp;
-                }
-            }
-        }
-    }
 
-    else if (mode == FROM_END)
+    for (size_t j = 1; j < indexsize; j++)
     {
-        for (size_t j = 1; j < indexsize; j++)
+        for (size_t i = 0; i < indexsize - j; i++)
         {
-            for (size_t i = 0; i < indexsize - j; i++)
+            ass ((char*)Index[i].strStart != NULL);
+            ass ((char*)Index[i + 1].strStart != NULL);
+            if((*cmp)(Index[i], Index[i + 1]) < 0)
             {
-                ass ((char*)Index[i].strEnd != NULL);
-                ass ((char*)Index[i + 1].strEnd != NULL);
-                if(Str_Compare_from_end (Index[i].strEnd, Index[i + 1].strEnd) < 0)
-                {
-                    string temp = Index[i];
-                    Index[i] = Index[i + 1];
-                    Index[i + 1] = temp;
-                }
+                str_t temp = Index[i];
+                Index[i] = Index[i + 1];
+                Index[i + 1] = temp;
             }
         }
     }
 }
 
-void Output_to_File (string Index[], size_t indexsize)
+void Output_to_File (str_t Index[], size_t indexsize)
 {
     FILE* sort_buffer = fopen ("sort_onegin.txt", "w");
     ass (sort_buffer != NULL);
@@ -308,7 +288,7 @@ int Is_malloc (const char* str)
     }
 }
 
-void Poem_generator (string Index[], size_t indexsize)
+void Poem_generator (str_t Index[], size_t indexsize)
 {
     FILE* poem = fopen ("Poem.txt", "w");
     ass (poem != NULL);
@@ -345,7 +325,7 @@ void Poem_generator (string Index[], size_t indexsize)
     fprintf (poem, "%s\n", Index[rifm1[6]].strStart);
     fprintf (poem, "%s\n", Index[rifm2[6]].strStart);
 
-    fprintf (poem, "Автор: void Poem_generator (string Index[], size_t indexsize)\n");
+    fprintf (poem, "Автор: void Poem_generator (str_t Index[], size_t indexsize)\n");
 
     fclose (poem);
 
@@ -367,7 +347,7 @@ void Poem_generator (string Index[], size_t indexsize)
     printf ("%s\n", Index[rifm1[6]].strStart);
     printf ("%s\n", Index[rifm2[6]].strStart);
 
-    printf ("Автор: void Poem_generator (string Index[], size_t indexsize)\n");
+    printf ("Автор: void Poem_generator (str_t Index[], size_t indexsize)\n");
 }
 
 
